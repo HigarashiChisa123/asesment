@@ -4,73 +4,86 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
-    const { username, email, password } = await req.json();
+    const { email, username, password, full_name, class: userClass, birthday, hobby, bio } = await req.json();
 
-    // 🔍 Validasi input
-    if (!username || !email || !password) {
+    // Validasi input
+    if (!email || !username || !password) {
       return NextResponse.json(
-        { success: false, message: "Semua file harus diisi" },
+        { success: false, message: "Email, username, dan password wajib diisi" },
         { status: 400 }
       );
     }
 
-    // 🔍 Validasi email harus Gmail
-    if (!email.endsWith("@gmail.com")) {
+    // Validasi email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { success: false, message: "Email harus menggunakan Gmail" },
+        { success: false, message: "Format email tidak valid" },
         { status: 400 }
       );
     }
 
-    // 🔍 Cek username sudah ada atau belum
-    const [cekUser] = await db.query(
-      "SELECT username FROM users WHERE username = ?",
-      [username]
-    );
-
-    if (cekUser.length > 0) {
+    // Validasi password
+    if (password.length < 6) {
       return NextResponse.json(
-        { success: false, message: "Username sudah digunakan" },
+        { success: false, message: "Password minimal 6 karakter" },
         { status: 400 }
       );
     }
 
-    // 🔍 Cek email sudah ada atau belum
-    const [cekEmail] = await db.query(
-      "SELECT email FROM users WHERE email = ?",
+    // Cek email duplikat
+    const [existingEmail] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
       [email]
     );
 
-    if (cekEmail.length > 0) {
+    if (existingEmail.length > 0) {
       return NextResponse.json(
         { success: false, message: "Email sudah terdaftar" },
         { status: 400 }
       );
     }
 
-    // 🔐 Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Cek username duplikat
+    const [existingUsername] = await db.query(
+      "SELECT id FROM users WHERE username = ?",
+      [username]
+    );
 
-    // 💾 Simpan ke database
+    if (existingUsername.length > 0) {
+      return NextResponse.json(
+        { success: false, message: "Username sudah digunakan" },
+        { status: 400 }
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Parse tanggal lahir jika ada
+    let parsedBirthday = null;
+    if (birthday) {
+      const [day, month, year] = birthday.split('/');
+      parsedBirthday = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Insert user baru
     await db.query(
-      "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')",
-      [username, email, hashedPassword]
+      `INSERT INTO users 
+      (email, username, password, full_name, class, birthday, hobby, bio, role) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'user')`,
+      [email, username, hashedPassword, full_name || username, userClass || 'Grade 11 RPL 5', 
+       parsedBirthday, hobby || 'Reading Books', bio || 'I Like Reads Books']
     );
 
     return NextResponse.json({
       success: true,
-      message: "Akun berhasil dibuat!",
+      message: "Registrasi berhasil! Silakan login.",
     });
-
-  } catch (error) {
-    console.error("REGISTER ERROR:", error);
-
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Terjadi kesalahan server",
-        error: error.message,
-      },
+      { success: false, message: "Kesalahan server", error: err.message },
       { status: 500 }
     );
   }

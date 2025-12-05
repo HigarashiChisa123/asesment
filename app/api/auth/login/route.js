@@ -14,9 +14,15 @@ export async function POST(req) {
       );
     }
 
-    // Query sesuai createConnection()
+    // Ambil user dengan data profil lengkap
     const [rows] = await db.query(
-      "SELECT * FROM users WHERE username = ? LIMIT 1",
+      `SELECT 
+        id, username, password, email, role,
+        COALESCE(full_name, username) as full_name,
+        COALESCE(profile_picture, '/default-avatar.png') as profile_picture,
+        background_picture,
+        COALESCE(bio, '') as bio
+      FROM users WHERE username = ? LIMIT 1`,
       [username]
     );
 
@@ -29,9 +35,8 @@ export async function POST(req) {
 
     const user = rows[0];
 
-    // Cek password (wajib hashed di DB)
+    // Verifikasi password
     const valid = await bcrypt.compare(password, user.password);
-
     if (!valid) {
       return NextResponse.json(
         { success: false, message: "Password salah" },
@@ -39,34 +44,47 @@ export async function POST(req) {
       );
     }
 
-    // Pastikan JWT secret ada
-    if (!process.env.JWT_SECRET) {
-      return NextResponse.json(
-        { success: false, message: "JWT_SECRET tidak ditemukan" },
-        { status: 500 }
-      );
-    }
-
-    // Buat token
+    // Buat token JWT
     const token = jwt.sign(
       {
         id: user.id,
         username: user.username,
+        email: user.email,
         role: user.role,
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
+    // Data user untuk disimpan di cookie
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      full_name: user.full_name,
+      profile_picture: user.profile_picture,
+      background_picture: user.background_picture,
+      bio: user.bio,
+      role: user.role,
+    };
+
     const response = NextResponse.json({
       success: true,
       message: "Login berhasil",
-      role: user.role,
+      user: userData,
     });
 
-    // Simpan token di cookie
+    // Set token cookie (httpOnly untuk keamanan)
     response.cookies.set("token", token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 hari
+    });
+
+    // Set user data cookie (bisa diakses client)
+    response.cookies.set("user", JSON.stringify(userData), {
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
@@ -76,9 +94,8 @@ export async function POST(req) {
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     return NextResponse.json(
-      { success: false, message: "Kesalahan server", error: err.message },
+      { success: false, message: "Kesalahan server" },
       { status: 500 }
     );
   }
 }
-  

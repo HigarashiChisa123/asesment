@@ -30,7 +30,7 @@ export default function Register() {
     }
 
     // 🔥 Arahkan ke dashboard user
-    window.location.href = "/user/dashboard";
+    window.location.href = "/login";
   }
 
   return (
