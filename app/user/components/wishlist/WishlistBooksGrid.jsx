@@ -5,7 +5,8 @@ import WishlistBookCard from './WishlistBookCard';
 export const WishlistBooksGrid = ({ 
   filteredBooks, 
   toggleLike, 
-  removeFromWishlist 
+  removeFromWishlist,
+  onBorrow 
 }) => {
   if (filteredBooks.length === 0) {
     return (
@@ -30,6 +31,7 @@ export const WishlistBooksGrid = ({
           book={book}
           toggleLike={toggleLike}
           removeFromWishlist={removeFromWishlist}
+          onBorrow={onBorrow}
         />
       ))}
     </div>

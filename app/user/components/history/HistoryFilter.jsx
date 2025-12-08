@@ -1,5 +1,6 @@
 'use client';
 import { Filter, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const HistoryFilter = ({ 
   selectedFilter, 
@@ -9,6 +10,8 @@ export const HistoryFilter = ({
   selectAll, 
   deleteSelected 
 }) => {
+  const [categories, setCategories] = useState(['all', 'Educational', 'Computer Science', 'Comics']);
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
       <div className="flex justify-between items-center">
@@ -17,8 +20,8 @@ export const HistoryFilter = ({
             <Filter className="w-5 h-5 text-gray-500" />
             <span className="font-semibold text-gray-700">Filter by:</span>
           </div>
-          <div className="flex gap-2">
-            {['all', 'Educational', 'Computer Science', 'Self-Help', 'Psychology'].map((filter) => (
+          <div className="flex gap-2 flex-wrap">
+            {categories.map((filter) => (
               <button
                 key={filter}
                 onClick={() => setSelectedFilter(filter)}

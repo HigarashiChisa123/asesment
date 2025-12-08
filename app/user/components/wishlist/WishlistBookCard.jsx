@@ -4,7 +4,8 @@ import { Heart, Star, Trash2 } from 'lucide-react';
 export const WishlistBookCard = ({ 
   book, 
   toggleLike, 
-  removeFromWishlist 
+  removeFromWishlist,
+  onBorrow 
 }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
@@ -32,7 +33,10 @@ export const WishlistBookCard = ({
           {/* Overlay on Hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="absolute bottom-4 left-4 right-4 space-y-2">
-              <button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition">
+              <button
+                onClick={() => onBorrow(book.id)}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition"
+              >
                 {book.available ? 'Borrow Now' : 'Notify Me'}
               </button>
               <button 

@@ -34,10 +34,10 @@ export async function GET(request) {
     const [wishlist] = await db.query(`
       SELECT 
         b.id,
-        b.title,
-        b.author,
+        b.book_name AS title,
+        b.creator AS author,
         b.category,
-        b.cover_url as cover_url,
+        b.cover_url,
         b.rating,
         b.reviews,
         b.available,
@@ -55,7 +55,7 @@ export async function GET(request) {
       title: item.title,
       author: item.author,
       category: item.category || 'General',
-      cover_url: item.cover_url || `https://via.placeholder.com/300x400/667eea/ffffff?text=${encodeURIComponent(item.title.substring(0, 10))}`,
+      cover_url: item.cover_url || `https://via.placeholder.com/300x400/667eea/ffffff?text=${encodeURIComponent((item.title || 'BK').substring(0, 10))}`,
       rating: parseFloat(item.rating) || 4.0,
       reviews: item.reviews || 0,
       available: Boolean(item.available),

@@ -2,7 +2,8 @@
 export const fetchWishlistBooks = async () => {
   try {
     const response = await fetch('/api/wishlist', {
-      credentials: 'include'
+      credentials: 'include',
+      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -19,16 +20,10 @@ export const fetchWishlistBooks = async () => {
 
 export const fetchUserData = async () => {
   try {
-    const response = await fetch('/api/auth/check', {
-      credentials: 'include'
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
+    const response = await fetch('/api/auth/profile', { credentials: 'include' });
+    if (!response.ok) return null;
     const data = await response.json();
-    return data.user;
+    return data.user || data.profile || null;
   } catch (error) {
     console.error('Error fetching user data:', error);
     return null;
@@ -37,7 +32,7 @@ export const fetchUserData = async () => {
 
 export const fetchAllBooks = async () => {
   try {
-    const response = await fetch('/api/books');
+    const response = await fetch('/api/books', { cache: 'no-store' });
     
     if (!response.ok) {
       throw new Error('Failed to fetch books');

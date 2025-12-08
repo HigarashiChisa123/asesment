@@ -29,15 +29,15 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen flex flex-col bg-white w-full overflow-hidden">
+    <main className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-blue-50 w-full overflow-hidden">
 
       {/* Hero Section */}
       <section className="w-full flex flex-col md:flex-row items-center justify-center gap-10 px-6 md:px-20 py-20 relative">
-        <div className="absolute top-5 left-10 w-24 h-24 bg-gray-200 rounded-full opacity-40 z-0"></div>
-        <div className="absolute top-40 left-1/4 w-20 h-20 bg-gray-200 rounded-full opacity-40 z-0"></div>
-        <div className="absolute bottom-10 left-1/3 w-24 h-24 bg-gray-200 rounded-full opacity-40 z-0"></div>
-        <div className="absolute bottom-24 right-20 w-28 h-28 bg-gray-200 rounded-full opacity-40 z-0"></div>
-        <div className="absolute top-1/2 right-5 w-16 h-16 bg-gray-200 rounded-full opacity-40 z-0"></div>
+        <div className="absolute top-5 left-10 w-28 h-28 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-60 z-0 blur-xl"></div>
+        <div className="absolute top-40 left-1/4 w-24 h-24 bg-gradient-to-br from-indigo-100 to-blue-50 rounded-full opacity-60 z-0 blur-lg"></div>
+        <div className="absolute bottom-10 left-1/3 w-28 h-28 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full opacity-60 z-0 blur-xl"></div>
+        <div className="absolute bottom-24 right-20 w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full opacity-60 z-0 blur-xl"></div>
+        <div className="absolute top-1/2 right-5 w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-100 rounded-full opacity-60 z-0 blur-lg"></div>
 
         <motion.div
           initial={{ opacity: 0, x: -40 }}
@@ -73,7 +73,7 @@ export default function Home() {
 
           <button
             onClick={goToLogin}
-            className="bg-blue-600 text-white px-8 py-3 rounded-full shadow-md hover:bg-blue-700 transition transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition transform hover:scale-105"
           >
             Go Now!!
           </button>
@@ -81,8 +81,8 @@ export default function Home() {
       </section>
 
       {/* CHOOSE YOUR BOOK */}
-      <section className="w-full py-16 flex flex-col items-center">
-        <h2 className="text-3xl font-bold mb-12">
+      <section id="books" className="w-full py-16 flex flex-col items-center bg-gradient-to-b from-white to-indigo-50">
+        <h2 className="text-3xl font-bold mb-12 text-gray-900">
           <span className="text-black">Choose Your</span>{" "}
           <span className="text-blue-600">Book</span>
         </h2>
@@ -95,7 +95,7 @@ export default function Home() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="w-72 bg-white shadow-lg p-6 rounded-xl flex flex-col items-center hover:shadow-2xl transition-all"
+              className="w-72 bg-white shadow-lg p-6 rounded-xl flex flex-col items-center hover:shadow-2xl transition-all border border-blue-50"
             >
               <img
                 src="/image/Sample-book.png"
@@ -107,7 +107,7 @@ export default function Home() {
 
               <button
                 onClick={goToLogin}
-                className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-6 rounded-full shadow-md"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-95 text-white text-sm font-medium py-2 px-6 rounded-full shadow-md"
               >
                 Go Now!!
               </button>
@@ -117,8 +117,11 @@ export default function Home() {
       </section>
 
    {/* TESTIMONIAL SLIDER DOUBLE */}
-<section className="w-full py-20 text-center overflow-hidden bg-white">
-  <h2 className="text-3xl font-bold mb-10">
+<section
+  id="testimonials"
+  className="w-full py-20 text-center overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-blue-50"
+>
+  <h2 className="text-3xl font-bold mb-10 text-gray-900">
     <span className="text-blue-600">TB Digital Reads</span>{" "}
     Becomes a Solution for Young People's Work
   </h2>
@@ -133,7 +136,7 @@ export default function Home() {
     {[...testimonials, ...testimonials].map((item, index) => (
       <div
         key={index}
-        className="w-80 p-6 bg-blue-100 rounded-2xl shadow-md"
+        className="w-80 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-md border border-blue-100"
       >
         <p className="text-left italic text-gray-700 mb-6">"{item.text}"</p>
         <div className="flex items-center gap-3">
@@ -157,7 +160,7 @@ export default function Home() {
     {[...testimonials, ...testimonials].map((item, index) => (
       <div
         key={index}
-        className="w-80 p-6 bg-blue-100 rounded-2xl shadow-md"
+        className="w-80 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-md border border-blue-100"
       >
         <p className="text-left italic text-gray-700 mb-6">"{item.text}"</p>
         <div className="flex items-center gap-3">

@@ -1,52 +1,34 @@
 'use client';
 import { Book, User, Heart, History, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/app/context/auth-context';
 
 export const SimpleSidebar = ({ activePage = 'dashboard', onLogoutClick }) => {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔄 SimpleSidebar fetching user...');
-    
-    // 1. Check localStorage first
+    if (authLoading) return;
+
+    if (authUser) {
+      setUser(authUser);
+      localStorage.setItem('userData', JSON.stringify(authUser));
+      setLoading(false);
+      return;
+    }
+
     const cachedUser = localStorage.getItem('userData');
     if (cachedUser) {
       try {
-        const parsedUser = JSON.parse(cachedUser);
-        console.log('📦 SimpleSidebar using cached user:', parsedUser.username);
-        setUser(parsedUser);
-        setLoading(false);
+        setUser(JSON.parse(cachedUser));
       } catch (e) {
         console.error('❌ Failed to parse cached user:', e);
+        localStorage.removeItem('userData');
       }
     }
-
-    // 2. Fetch from API
-    const fetchUser = async () => {
-      try {
-        console.log('📞 SimpleSidebar calling API...');
-        const response = await fetch('/api/auth/profile');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.user) {
-            console.log('✅ SimpleSidebar API success:', data.user.username);
-            setUser(data.user);
-            localStorage.setItem('userData', JSON.stringify(data.user));
-          }
-        }
-      } catch (error) {
-        console.error('❌ SimpleSidebar API error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // If no cached user or want fresh data
-    if (!cachedUser) {
-      fetchUser();
-    }
-  }, []);
+    setLoading(false);
+  }, [authUser, authLoading]);
 
   const getDisplayName = () => {
     if (user?.full_name && user.full_name.trim() !== '') {
@@ -88,9 +70,11 @@ export const SimpleSidebar = ({ activePage = 'dashboard', onLogoutClick }) => {
     <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-50">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-            <Book className="w-7 h-7 text-white" />
-          </div>
+          <img
+            src="/image/LogoTb.jpg"
+            alt="TB Digital Reads"
+            className="w-12 h-12 rounded-lg object-cover border border-blue-200 shadow-sm"
+          />
           <div>
             <h1 className="text-xl font-bold text-gray-800">TB Digital</h1>
             <p className="text-sm text-gray-500">Reads</p>

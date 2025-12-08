@@ -1,14 +1,22 @@
 'use client';
-import { Book, Calendar } from 'lucide-react';
+import { Book, Calendar, CheckCircle, AlertTriangle } from 'lucide-react';
 
-export const HistoryStats = ({ stats }) => {
+export const HistoryStats = ({ stats, userStats }) => {
+  // Gunakan stats dari props jika ada, atau dari user.borrowing_stats
+  const displayStats = stats || userStats || {
+    total: 0,
+    thisMonth: 0,
+    returned: 0,
+    overdue: 0
+  };
+
   return (
     <div className="grid grid-cols-4 gap-6 mb-8">
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition">
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-blue-100 text-sm mb-1">Total Books</p>
-            <h3 className="text-4xl font-bold">{stats.total}</h3>
+            <h3 className="text-4xl font-bold">{displayStats.total || displayStats.total_borrowed || 0}</h3>
           </div>
           <div className="bg-white/20 p-3 rounded-lg">
             <Book className="w-6 h-6" />
@@ -21,7 +29,7 @@ export const HistoryStats = ({ stats }) => {
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-purple-100 text-sm mb-1">This Month</p>
-            <h3 className="text-4xl font-bold">{stats.thisMonth}</h3>
+            <h3 className="text-4xl font-bold">{displayStats.thisMonth || 0}</h3>
           </div>
           <div className="bg-white/20 p-3 rounded-lg">
             <Calendar className="w-6 h-6" />
@@ -34,12 +42,10 @@ export const HistoryStats = ({ stats }) => {
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-green-100 text-sm mb-1">Returned</p>
-            <h3 className="text-4xl font-bold">{stats.returned}</h3>
+            <h3 className="text-4xl font-bold">{displayStats.returned || displayStats.completed || 0}</h3>
           </div>
           <div className="bg-white/20 p-3 rounded-lg">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircle className="w-6 h-6" />
           </div>
         </div>
         <p className="text-green-100 text-sm">Successfully returned</p>
@@ -49,12 +55,10 @@ export const HistoryStats = ({ stats }) => {
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-red-100 text-sm mb-1">Overdue</p>
-            <h3 className="text-4xl font-bold">{stats.overdue}</h3>
+            <h3 className="text-4xl font-bold">{displayStats.overdue || 0}</h3>
           </div>
           <div className="bg-white/20 p-3 rounded-lg">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <AlertTriangle className="w-6 h-6" />
           </div>
         </div>
         <p className="text-red-100 text-sm">Need attention</p>

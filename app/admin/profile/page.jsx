@@ -1,23 +1,64 @@
 'use client'
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, Mail, Phone, Shield, Edit2, Check, X } from 'lucide-react';
 
 const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [saveStatus, setSaveStatus] = useState({ type: '', message: '' });
+  const [saving, setSaving] = useState(false);
   
   const [profile, setProfile] = useState({
-    name: 'Amane Yun',
-    email: 'amane.yun@tbdigital.com',
-    phone: '+62 812-3456-7890',
-    role: 'Administrator',
-    bio: 'I like reading books and managing TB Digital platform'
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
+    bio: ''
   });
 
   const [tempProfile, setTempProfile] = useState({ ...profile });
-  const [profileImage, setProfileImage] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=AmaneYun');
+  const [profileImage, setProfileImage] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
   const profileInputRef = useRef(null);
   const backgroundInputRef = useRef(null);
+
+  const broadcastProfileUpdate = (payload) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('adminProfileUpdated', { detail: payload }));
+    }
+  };
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/auth/profile', { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load profile');
+
+        const user = data.profile || data.user || {};
+        const updatedProfile = {
+          name: user.full_name || user.username || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          role: user.role || 'Administrator',
+          bio: user.bio || 'I like reading books and managing TB Digital platform'
+        };
+
+        setProfile(updatedProfile);
+        setTempProfile(updatedProfile);
+        setProfileImage(user.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username || 'Admin'}`);
+        setBackgroundImage(user.background_picture || '');
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
@@ -46,9 +87,54 @@ const ProfilePage = () => {
     setIsEditing(true);
   };
 
-  const handleConfirm = () => {
-    setProfile({ ...tempProfile });
-    setIsEditing(false);
+  const handleConfirm = async () => {
+    setSaveStatus({ type: '', message: '' });
+    try {
+      setSaving(true);
+      const payload = {
+        profile_full_name: tempProfile.name,
+        profile_bio: tempProfile.bio,
+        profile_phone: tempProfile.phone,
+        profile_profile_picture: profileImage,
+        profile_background_picture: backgroundImage,
+      };
+
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      const updated = data.profile || {};
+      const newProfile = {
+        name: updated.full_name || tempProfile.name,
+        email: updated.email || tempProfile.email,
+        phone: updated.phone || tempProfile.phone,
+        role: updated.role || tempProfile.role,
+        bio: updated.bio || tempProfile.bio,
+      };
+
+      setProfile(newProfile);
+      setTempProfile(newProfile);
+      setProfileImage(updated.profile_picture || profileImage);
+      setBackgroundImage(updated.background_picture || backgroundImage);
+      broadcastProfileUpdate({
+        name: newProfile.name,
+        bio: newProfile.bio,
+        image: updated.profile_picture || profileImage,
+      });
+      setIsEditing(false);
+      setSaveStatus({ type: 'success', message: data.message || 'Profile updated successfully' });
+    } catch (err) {
+      setSaveStatus({ type: 'error', message: err.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -62,6 +148,23 @@ const ProfilePage = () => {
 
   return (
     <div className="p-8">
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+      {saveStatus.message && (
+        <div
+          className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+            saveStatus.type === 'success'
+              ? 'bg-green-50 border border-green-200 text-green-700'
+              : 'bg-red-50 border border-red-200 text-red-700'
+          }`}
+        >
+          {saveStatus.message}
+        </div>
+      )}
+
       {/* Profile Card */}
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
         <div 
@@ -89,7 +192,7 @@ const ProfilePage = () => {
           <div className="absolute -bottom-16 left-8">
             <div className="relative group">
               <img 
-                src={profileImage}
+                src={profileImage || '/image/LogoTb.jpg'}
                 alt="Profile" 
                 className="w-32 h-32 rounded-full border-4 border-white shadow-xl bg-white object-cover"
               />
@@ -141,7 +244,7 @@ const ProfilePage = () => {
                   className="w-full px-4 py-2.5 border-2 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 bg-white"
                 />
               ) : (
-                <p className="text-gray-800 font-semibold text-lg">{profile.name}</p>
+                <p className="text-gray-800 font-semibold text-lg">{profile.name || '-'}</p>
               )}
             </div>
 
@@ -151,7 +254,7 @@ const ProfilePage = () => {
                 <Mail className="w-4 h-4" />
                 Email
               </label>
-              <p className="text-gray-800 font-semibold text-lg">{profile.email}</p>
+              <p className="text-gray-800 font-semibold text-lg">{profile.email || '-'}</p>
             </div>
 
             {/* Phone */}
@@ -168,7 +271,7 @@ const ProfilePage = () => {
                   className="w-full px-4 py-2.5 border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 bg-white"
                 />
               ) : (
-                <p className="text-gray-800 font-semibold text-lg">{profile.phone}</p>
+                <p className="text-gray-800 font-semibold text-lg">{profile.phone || '-'}</p>
               )}
             </div>
 
@@ -195,7 +298,7 @@ const ProfilePage = () => {
                   className="w-full px-4 py-2.5 border-2 border-indigo-300 rounded-xl focus:outline-none focus:border-indigo-500 bg-white"
                 />
               ) : (
-                <p className="text-gray-800 font-semibold text-lg">{profile.bio}</p>
+                <p className="text-gray-800 font-semibold text-lg">{profile.bio || '-'}</p>
               )}
             </div>
           </div>
@@ -212,10 +315,11 @@ const ProfilePage = () => {
               </button>
               <button
                 onClick={handleConfirm}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 hover:scale-105"
+                disabled={saving}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 hover:scale-105 disabled:opacity-70"
               >
                 <Check className="w-5 h-5" />
-                Confirm Changes
+                {saving ? 'Saving...' : 'Confirm Changes'}
               </button>
             </div>
           )}

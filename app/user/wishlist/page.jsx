@@ -7,34 +7,33 @@ import WishlistFilter from './../components/wishlist/WishlistFilter';
 import WishlistBooksGrid from './../components/wishlist/WishlistBooksGrid';
 import Footer from './../components/shared/Footer';
 import LogoutConfirmationModal from './../components/shared/LogoutConfirmationModal';
-import { fetchWishlistBooks, fetchUserData, fetchAllBooks } from './../components/wishlist/data/wishlistData';
+import { fetchWishlistBooks, fetchAllBooks } from './../components/wishlist/data/wishlistData';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/auth-context';
 
 export default function WishlistPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [books, setBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    loadWishlistData();
-  }, []);
+    if (!authLoading) {
+      loadWishlistData();
+    }
+  }, [authLoading, user]);
 
   const loadWishlistData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch user data
-      const userData = await fetchUserData();
-      if (!userData) {
+      if (!user) {
         router.push('/login');
         return;
       }
-      setUser(userData);
       
       // Fetch wishlist books
       const wishlistBooks = await fetchWishlistBooks();
@@ -81,6 +80,8 @@ export default function WishlistPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({ bookId }),
       });
 
@@ -99,6 +100,8 @@ export default function WishlistPage() {
     try {
       const response = await fetch(`/api/wishlist?bookId=${bookId}`, {
         method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store'
       });
 
       if (response.ok) {
@@ -125,6 +128,8 @@ export default function WishlistPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({ bookId }),
       });
 
@@ -195,6 +200,7 @@ export default function WishlistPage() {
             filteredBooks={filteredBooks}
             toggleLike={toggleLike}
             removeFromWishlist={removeFromWishlist}
+            onBorrow={(bookId) => router.push(`/books/${bookId}`)}
             onBrowseBooks={() => {
               // Show all books modal or redirect
               alert('Browse Books feature would show all available books');

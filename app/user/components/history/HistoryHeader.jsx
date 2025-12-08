@@ -1,80 +1,77 @@
-'use client';
-import { Search } from 'lucide-react';
-import { useAuth } from '@/app/context/auth-context';
-import { useEffect, useState } from 'react';
+"use client";
+import { Search, RefreshCw } from "lucide-react";
+import { useAuth } from "@/app/context/auth-context";
+import { useEffect, useState } from "react";
 
 export const HistoryHeader = ({ searchQuery, setSearchQuery }) => {
-  const { user, loading } = useAuth();
-  const [displayUser, setDisplayUser] = useState(null);
+  const { user, loading, refreshUser } = useAuth();
+  const [avatarError, setAvatarError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    console.log('📱 HistoryHeader - User:', user);
-    
-    if (user) {
-      setDisplayUser(user);
-    } else {
-      // Fallback to localStorage
-      const cachedUser = localStorage.getItem('userData');
-      if (cachedUser) {
-        try {
-          setDisplayUser(JSON.parse(cachedUser));
-        } catch (e) {
-          console.error('Failed to parse cached user:', e);
-        }
-      }
-    }
-  }, [user]);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   const getAvatarUrl = () => {
-    if (displayUser?.profile_picture) {
-      return displayUser.profile_picture;
-    }
-    
-    const seed = displayUser?.email || displayUser?.username || 'User';
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=65c7f7,ffd5dc`;
+    if (avatarError || !user?.profile_picture) return null;
+    if (user.profile_picture.startsWith('http')) return user.profile_picture;
+    if (user.profile_picture.startsWith('/uploads/')) return user.profile_picture;
+    return `/uploads/profile/${user.profile_picture}`;
   };
 
   const getDisplayName = () => {
-    if (displayUser?.full_name && displayUser.full_name.trim() !== '') {
-      return displayUser.full_name;
-    }
-    if (displayUser?.username) {
-      return displayUser.username;
-    }
-    return 'User';
+    if (user?.full_name?.trim()) return user.full_name;
+    if (user?.username?.trim()) return user.username;
+    return "User";
   };
 
-  const getBio = () => {
-    if (displayUser?.bio && displayUser.bio.trim() !== '') {
-      return displayUser.bio.length > 25 
-        ? displayUser.bio.substring(0, 25) + '...' 
-        : displayUser.bio;
-    }
-    return 'Book Lover';
+  const getUserBio = () => {
+    if (user?.bio && user.bio.trim()) return user.bio.trim();
+    return "I Like Reads Books";
   };
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-40">
       <div className="flex justify-between items-center px-8 py-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Reading History</h1>
-          <p className="text-gray-500 text-sm">Track all your borrowed books</p>
-        </div>
-        
+        {/* Title */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-4 flex-1 mx-8">
-            <div className="relative w-full max-w-2xl">
-              <input 
-                type="text" 
-                placeholder="Search books by title or author"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border-2 border-gray-200 rounded-full focus:outline-none focus:border-blue-400 transition placeholder:text-gray-800 text-black"
-              />
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Reading History
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Track all your borrowed books
+            </p>
           </div>
           
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+
+        {/* Search + User Profile */}
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative w-full max-w-2xl">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search books by title or author"
+              className="pl-10 pr-4 py-2 w-full border-2 border-gray-200 rounded-full focus:outline-none focus:border-blue-400 transition placeholder:text-gray-600 text-black"
+            />
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+
+          {/* User Badge */}
           <div className="flex items-center gap-3 bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 rounded-full shadow-md">
             {loading ? (
               <div className="flex items-center gap-3">
@@ -84,36 +81,37 @@ export const HistoryHeader = ({ searchQuery, setSearchQuery }) => {
                   <div className="h-2 w-16 bg-white/20 animate-pulse rounded"></div>
                 </div>
               </div>
-            ) : (
+            ) : user ? (
               <>
-                <div className="relative">
-                  <img 
-                    src={getAvatarUrl()}
-                    alt="Profile" 
-                    className="w-10 h-10 rounded-full bg-white border-2 border-white"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      const fallback = e.target.nextElementSibling;
-                      if (fallback) {
-                        fallback.classList.remove('hidden');
-                      }
-                    }}
-                  />
-                  <div 
-                    className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm border-2 border-white hidden"
-                  >
-                    {getDisplayName().substring(0, 2).toUpperCase()}
-                  </div>
+                {/* Avatar */}
+                <div className="relative w-10 h-10">
+                  {getAvatarUrl() ? (
+                    <img
+                      src={getAvatarUrl()}
+                      onError={() => setAvatarError(true)}
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full bg-white border-2 border-white object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-blue-600 font-bold border-2 border-white">
+                      {getDisplayName().substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="font-semibold text-sm text-white">
-                    {getDisplayName()}
-                  </p>
-                  <p className="text-xs text-blue-100 truncate max-w-[120px]">
-                    {getBio()}
+
+                {/* Name + Stats */}
+                <div className="text-white">
+                  <p className="font-semibold text-sm">{getDisplayName()}</p>
+                  <p className="text-xs text-blue-100 flex items-center gap-1 max-w-[180px] truncate">
+                    {getUserBio()}
                   </p>
                 </div>
               </>
+            ) : (
+              <div className="text-white">
+                <p className="font-semibold text-sm">Guest</p>
+                <p className="text-xs text-blue-100">Please login</p>
+              </div>
             )}
           </div>
         </div>
